@@ -1,20 +1,31 @@
-
 import puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
 
+/**
+ * Pauses execution for a specified number of milliseconds.
+ * 
+ * @param {number} milliseconds - The number of milliseconds to wait.
+ * @returns {Promise<void>} A promise that resolves after the specified time has elapsed.
+ */
 async function waitFor(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
+/**
+ * Automatically scrolls down the page until the bottom is reached.
+ * 
+ * @param {import('puppeteer').Page} page - The Puppeteer page object to perform the scroll on.
+ * @returns {Promise<void>} A promise that resolves once the scroll operation is complete.
+ */
 async function autoScroll(page) {
   await page.evaluate(async () => {
     await new Promise((resolve) => {
       let totalHeight = 0; // A variable to calculate the total distance traveled by scroll on the page.
-      const distance = 100; //Move 100 pixels at a time
+      const distance = 100; // Move 100 pixels at a time
       const timer = setInterval(() => {
         window.scrollBy(0, distance); // window > Move the page by 100 pixels
         totalHeight += distance;
-      // document.body.scrollHeight : A property that expresses the total height of the page content in JavaScript
+        // document.body.scrollHeight : A property that expresses the total height of the page content in JavaScript
         if (totalHeight >= document.body.scrollHeight) {
           clearInterval(timer);
           resolve();
@@ -24,16 +35,22 @@ async function autoScroll(page) {
   });
 }
 
+/**
+ * Scrapes a Twitter account for ticker symbols (e.g., $AAPL) in tweets.
+ * 
+ * @param {string} account - The Twitter account handle (username) to scrape.
+ * @returns {Promise<Object<string, number>>} An object containing the ticker symbols and their occurrence counts.
+ */
 async function scrapeTwitter(account) {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
-  await page.goto(`https://twitter.com/${account}`, { waitUntil: 'networkidle2' , timeout: 0  });
-/* 
-waitUntil: 'networkidle2' - >The page has been fully loaded.
-timeout :Unlimited waiting for the page to load.
-*/ 
+  await page.goto(`https://twitter.com/${account}`, { waitUntil: 'networkidle2', timeout: 0 });
+  /* 
+  waitUntil: 'networkidle2' - >The page has been fully loaded.
+  timeout :Unlimited waiting for the page to load.
+  */
   console.log(`Starting to scroll through @${account}'s timeline...`);
-  let previousHeight = await page.evaluate('document.body.scrollHeight');// We get the full height of the page
+  let previousHeight = await page.evaluate('document.body.scrollHeight'); // We get the full height of the page
   let reachedEnd = false;
   const scrollPause = 3000;
 
@@ -77,6 +94,11 @@ timeout :Unlimited waiting for the page to load.
   return tickerCounts;
 }
 
+/**
+ * The main function that coordinates scraping multiple Twitter accounts and logs the results.
+ * 
+ * @returns {Promise<void>} A promise that resolves when the scraping and logging process is complete.
+ */
 async function main() {
   const accounts = [
     'Mr_Derivatives', 'warrior_0719', 'ChartingProdigy', 
@@ -86,6 +108,11 @@ async function main() {
   
   const interval = 15 * 60 * 1000; // Repeat between each data collection process for 15 minutes
 
+  /**
+   * Scrapes all specified Twitter accounts and prints the results.
+   * 
+   * @returns {Promise<void>} A promise that resolves once all accounts have been processed.
+   */
   async function scrapeAndPrint() {
     let allTickerCounts = {};
 
@@ -100,20 +127,20 @@ async function main() {
 
     const currentTime = new Date();
     const elapsedMinutes = Math.round((currentTime - startTime) / 1000 / 60);
-   // Convert from seconds to minutes
+    // Convert from seconds to minutes
     Object.keys(allTickerCounts).forEach(ticker => {
       console.log(`'${ticker}' was mentioned '${allTickerCounts[ticker]}' times in the last '${elapsedMinutes}' minutes.`);
-   /*
-   ${ticker} - > Print the ticker
-   ${allTickerCounts[ticker]} - > Prints the number of times the symbol appears
-   ${elapsedMinutes} - > Prints the number of minutes that have passed since data collection began
-    */
+      /*
+      ${ticker} - > Print the ticker
+      ${allTickerCounts[ticker]} - > Prints the number of times the symbol appears
+      ${elapsedMinutes} - > Prints the number of minutes that have passed since data collection began
+      */
     });
 
     console.log('All accounts processed successfully!');
   }
-// Repeat every 15 seconds between each data collection process and the second
-  const startTime = new Date(); 
+
+  const startTime = new Date();
 
   await scrapeAndPrint(); 
 
