@@ -53,7 +53,7 @@ async function scrapeTwitter(account) {
   let previousHeight = await page.evaluate('document.body.scrollHeight'); // We get the full height of the page
   let reachedEnd = false;
   const scrollPause = 3000;
-
+// while > It repeats the code inside it, and as a result, what Leon achieves is written between parentheses.
   while (!reachedEnd) { // Repeat until you reach the end of the timeline
     await autoScroll(page); // start Scroll
 
